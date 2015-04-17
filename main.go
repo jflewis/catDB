@@ -69,6 +69,8 @@ func getRandVid(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+
 		rw.Write(js)
 	}
 }
