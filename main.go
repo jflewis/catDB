@@ -26,7 +26,6 @@ func main() {
 	//The db.sql object is meant to be long lived. It does not create a connection to the source
 	//sql.Open create a connection to the db. instead it only prepares database abstraction for later use
 	db, err := sql.Open("mysql", "jflewis:jflewis2015!@tcp(mysqlcs.millersville.edu:3306)/jflewis")
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,9 +41,11 @@ func main() {
 
 	r := mux.NewRouter()
 	//r.Get(name)
+	//routes
 	r.HandleFunc("/randomVideo", getRandVid(db))
 	r.HandleFunc("/getAllVideos", getAllVideos(db))
 	r.HandleFunc("/addVideo", addVideo(db))
+	r.HandleFunc("/getPopularVideos", getPopularVideos(db))
 	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
 	http.ListenAndServe(":8080", r)
 
@@ -133,6 +134,43 @@ func getAllVideos(db *sql.DB) http.HandlerFunc {
 		rows, err := db.Query(`SELECT CatVid.title,CatVid.url,CatVid.video_poster, CatVid.date_posted ,CatVid.catVidID, Vote.upmeows, Vote.downmeows 
 							FROM CatVid, Vote
    							where Vote.catVidID = CatVid.catVidID`)
+		defer rows.Close()
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var videos []Video
+		//iterate through result set and create a slice of videos
+		for rows.Next() {
+			var video Video
+			err := rows.Scan(&video.Title, &video.Url, &video.Poster, &video.DatePosted, &video.CatVidId, &video.UpMeows, &video.DownMeows)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			videos = append(videos, video)
+		}
+		//marshel slice of videos into a json array
+		js, err := json.Marshal(videos)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.Write(js)
+	}
+}
+
+func getPopularVideos(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		rows, err := db.Query(`
+   				SELECT CatVid.title, CatVid.url, CatVid.video_poster, CatVid.date_posted, CatVid.catVidID, Vote.upmeows, Vote.downmeows
+				FROM CatVid, Vote
+				WHERE CatVid.CatVidID = Vote.CatVidID
+				ORDER BY upmeows DESC 
+				LIMIT 25`)
 		defer rows.Close()
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
