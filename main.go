@@ -57,12 +57,15 @@ func main() {
 	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
 	r.HandleFunc("/getVideoByTag", getVideoByTag(db))
 	r.HandleFunc("/getComments/{catVidId}", getCommentsForVideo(db))
+	r.HandleFunc("/getTags", getTags(db))
+	r.HandleFunc("/getTags/{catVidId}", getTagsByVidId(db))
 	//calls that need PUT
 	s.HandleFunc("/upMeow/{catVidId}", upMeows(db))
 	s.HandleFunc("/downMeow/{catVidId}", downMeows(db))
 	//calls that POST
 	q.HandleFunc("/addVideo", addVideo(db))
 	q.HandleFunc("/postComment", postComment(db))
+
 
 	http.ListenAndServe(":8080", r)
 
@@ -365,3 +368,77 @@ func getCommentsForVideo(db *sql.DB) http.HandlerFunc {
 	}
 
 }
+
+func getTags(db *sql.DB) http.HandlerFunc {
+     return func(rw http.ResponseWriter, req *http.Request) {
+	  
+		rows, err:= db.Query("SELECT * FROM Tag;")
+	  	defer rows.Close()
+	  	if err !=nil {
+	     	http.Error(rw, err.Error(), http.StatusInternalServerError)
+	     	return
+	 	 }
+	  
+		 var tags[] string
+	  	 //Store tags in a slice and marshal into json object
+	  	 for rows.Next(){
+
+	      	 var tagName string
+	      	 err:= rows.Scan(&tagName)
+	      	 if err != nil {
+	      	    http.Error(rw, err.Error(), http.StatusInternalServerError)
+		    return
+	      	    }
+
+	      	    tags = append(tags, tagName)
+	  	    }
+
+	  	    js,err := json.Marshal(tags) 
+	  	   
+		rw.WriteHeader(http.StatusOK)
+	  	rw.Header().Set("Content-Type", "application/json")
+	  	rw.Header().Set("Allow-Access-Control-Origin", "*")
+	  	rw.Write(js)
+	}
+}
+
+func getTagsByVidId(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request){
+
+		vars := mux.Vars(req)
+		catVid :=vars["catVidId"]
+
+		rows, err := db.Query(` SELECT Tag.tagName FROM Tag, VidTag
+   where ? = VidTag.catVidID
+   and VidTag.tagName = Tag.tagName;`, catVid)
+		defer rows.Close()
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var vidTags[] string
+		for rows.Next() {
+			var tag string
+			err:=rows.Scan(&tag)
+			if err != nil {
+				http.Error(rw,err.Error(),http.StatusInternalServerError)
+			}
+
+			vidTags = append(vidTags, tag)
+		}
+
+		js,err:= json.Marshal(vidTags)
+		if err != nil {
+			http.Error(rw,err.Error(),http.StatusInternalServerError)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Allow-Access-Control-Origin", "*")
+		rw.Write(js)
+	}
+}
+
