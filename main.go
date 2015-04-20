@@ -40,13 +40,17 @@ func main() {
 	}
 
 	r := mux.NewRouter()
-	//r.Get(name)
+	s := r.Methods("PUT").Subrouter()
 	//routes
 	r.HandleFunc("/randomVideo", getRandVid(db))
 	r.HandleFunc("/getAllVideos", getAllVideos(db))
-	r.HandleFunc("/addVideo", addVideo(db))
+	r.HandleFunc("/addVideo", addVideo(db)).Methods("POST")
 	r.HandleFunc("/getPopularVideos", getPopularVideos(db))
 	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
+
+	//calls that need PUT
+	s.HandleFunc("/upMeow/{catVidId}", upMeows(db))
+	s.HandleFunc("/downMeow/{catVidId}", downMeows(db))
 	http.ListenAndServe(":8080", r)
 
 }
@@ -67,8 +71,45 @@ func getRandVid(db *sql.DB) http.HandlerFunc {
 		}
 		rw.Header().Set("Content-Type", "application/json")
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
-
 		rw.Write(js)
+	}
+}
+
+func upMeows(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		catVidId := vars["catVidId"]
+
+		_, err := db.Exec(`UPDATE Vote
+   				SET upmeows = upmeows + 1
+   				WHERE Vote.CatVidID = ?`, catVidId)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		rw.WriteHeader(http.StatusNoContent)
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+
+	}
+}
+
+func downMeows(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		catVidId := vars["catVidId"]
+
+		_, err := db.Exec(`UPDATE Vote
+   				SET downmeows = downmeows + 1
+   				WHERE Vote.CatVidID = ?`, catVidId)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		rw.WriteHeader(http.StatusNoContent)
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+
 	}
 }
 
@@ -79,6 +120,9 @@ func addVideo(db *sql.DB) http.HandlerFunc {
 		tags := req.PostFormValue("tags")
 		userName := req.PostFormValue("userName")
 		endsWithComma := strings.HasSuffix(tags, ",")
+		if len(tags) == 0 {
+			tags += "lazy paws,"
+		}
 		if !endsWithComma {
 			tags += ","
 		}
