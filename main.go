@@ -43,6 +43,7 @@ func main() {
 	r := mux.NewRouter()
 	//r.Get(name)
 	r.HandleFunc("/randomVideo", getRandVid(db))
+	r.HandleFunc("/getAllVideos", getAllVideos(db))
 	r.HandleFunc("/addVideo", addVideo(db))
 	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
 	http.ListenAndServe(":8080", r)
@@ -124,5 +125,39 @@ func getVideoByUser(db *sql.DB) http.HandlerFunc {
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
 		rw.Write(js)
 
+	}
+}
+
+func getAllVideos(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		rows, err := db.Query(`SELECT CatVid.title,CatVid.url,CatVid.video_poster, CatVid.date_posted ,CatVid.catVidID, Vote.upmeows, Vote.downmeows 
+							FROM CatVid, Vote
+   							where Vote.catVidID = CatVid.catVidID`)
+		defer rows.Close()
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var videos []Video
+		//iterate through result set and create a slice of videos
+		for rows.Next() {
+			var video Video
+			err := rows.Scan(&video.Title, &video.Url, &video.Poster, &video.DatePosted, &video.CatVidId, &video.UpMeows, &video.DownMeows)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			videos = append(videos, video)
+		}
+		//marshel slice of videos into a json array
+		js, err := json.Marshal(videos)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.Write(js)
 	}
 }
