@@ -63,6 +63,7 @@ func main() {
 	s.HandleFunc("/downMeow/{catVidId}", downMeows(db))
 	//calls that POST
 	q.HandleFunc("/addVideo", addVideo(db))
+	q.HandleFunc("/postComment", postComment(db))
 
 	http.ListenAndServe(":8080", r)
 
@@ -147,6 +148,26 @@ func addVideo(db *sql.DB) http.HandlerFunc {
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
 		rw.WriteHeader(http.StatusCreated)
 
+	}
+}
+
+func postComment(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		catVidId := req.PostFormValue("catVidId")
+		poster := req.PostFormValue("userName")
+		commentBody := req.PostFormValue("commentBody")
+		var parentCommentId sql.NullString
+		parentCommentId.String = req.PostFormValue("parentId")
+		if len(parentCommentId.String) == 0 {
+			parentCommentId.Valid = false
+		}
+		_, err := db.Exec("call PostComment(?,?,?,?)", catVidId, parentCommentId, poster, commentBody)
+		if err != nil {
+			log.Fatal(err)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.WriteHeader(http.StatusCreated)
 	}
 }
 
@@ -328,13 +349,6 @@ func getCommentsForVideo(db *sql.DB) http.HandlerFunc {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			/*
-				if c.parentCommentId.Value() {
-					c.parentCommentId = c.parentCommentId.Int64
-				} else {
-					c.parentCommentId = nil
-				}
-			*/
 
 			comments = append(comments, c)
 		}
