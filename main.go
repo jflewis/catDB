@@ -22,6 +22,14 @@ type Video struct {
 	DownMeows  uint   `json:downMeows`
 }
 
+type Comment struct {
+	CommentId       int64  `json:commentId`
+	CatVidId        int64  `json:catVidId`
+	Poster          string `json:poster`
+	ComentDesc      string `json:comentDesc`
+	ParentCommentId *int64 `json:parentCommentId`
+}
+
 func main() {
 	//The db.sql object is meant to be long lived. It does not create a connection to the source
 	//sql.Open create a connection to the db. instead it only prepares database abstraction for later use
@@ -41,17 +49,20 @@ func main() {
 
 	r := mux.NewRouter()
 	s := r.Methods("PUT").Subrouter()
+	q := r.Methods("POST").Subrouter()
+
 	//routes
 	r.HandleFunc("/randomVideo", getRandVid(db))
-
 	r.HandleFunc("/getAllVideos", getAllVideos(db))
-	r.HandleFunc("/addVideo", addVideo(db)).Methods("POST")
 	r.HandleFunc("/getPopularVideos", getPopularVideos(db))
 	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
+	r.HandleFunc("/getVideoByTag", getVideoByTag(db))
+	r.HandleFunc("/getComments/{catVidId}", getCommentsForVideo(db))
 	//calls that need PUT
 	s.HandleFunc("/upMeow/{catVidId}", upMeows(db))
 	s.HandleFunc("/downMeow/{catVidId}", downMeows(db))
-	r.HandleFunc("/getVideoByTag", getVideoByTag(db))
+	//calls that POST
+	q.HandleFunc("/addVideo", addVideo(db))
 
 	http.ListenAndServe(":8080", r)
 
@@ -138,7 +149,6 @@ func addVideo(db *sql.DB) http.HandlerFunc {
 
 	}
 }
-
 
 func getVideoByUser(db *sql.DB) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
@@ -248,47 +258,97 @@ func getPopularVideos(db *sql.DB) http.HandlerFunc {
 }
 
 func getVideoByTag(db *sql.DB) http.HandlerFunc {
-     return func(rw http.ResponseWriter, req *http.Request) {
-     	    tags := req.URL.Query().Get("tags")
-	    endsWithComma := strings.HasSuffix(tags, ",")
+	return func(rw http.ResponseWriter, req *http.Request) {
+		tags := req.URL.Query().Get("tags")
+		endsWithComma := strings.HasSuffix(tags, ",")
 		if !endsWithComma {
 			tags += ","
 		}
-	   rows, err:=  db.Query(`SELECT CatVid.title,CatVid.url,CatVid.video_poster, CatVid.date_posted ,CatVid.catVidID, Vote.upmeows, Vote.downmeows FROM CatVid, Vote, Tag, VidTag
+		rows, err := db.Query(`SELECT CatVid.title,CatVid.url,CatVid.video_poster, CatVid.date_posted ,CatVid.catVidID, Vote.upmeows, Vote.downmeows FROM CatVid, Vote, Tag, VidTag
     where Vote.catVidID = CatVid.catVidID
     and  CatVid.catVidID = VidTag.catVidID
     and VidTag.tagName = Tag.tagName
     and find_in_set(Tag.tagName, ?)
-    group by CatVid.catVidID;`,tags)
-    defer rows.Close()
+    group by CatVid.catVidID;`, tags)
+		defer rows.Close()
 
-    if err != nil {
-       http.Error(rw, err.Error(), http.StatusInternalServerError)
-       return
-    }
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-   var videos []Video
+		var videos []Video
 
-       for rows.Next() {
-       	   var video Video
-       	   err:=rows.Scan(&video.Title, &video.Url, &video.Poster, &video.DatePosted, &video.CatVidId, &video.UpMeows, &video.DownMeows)
-       	   if err != nil {
-       	      http.Error(rw, err.Error(), http.StatusInternalServerError)
-       	      return
-	   }
+		for rows.Next() {
+			var video Video
+			err := rows.Scan(&video.Title, &video.Url, &video.Poster, &video.DatePosted, &video.CatVidId, &video.UpMeows, &video.DownMeows)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
-	   videos = append(videos, video)
-       }
+			videos = append(videos, video)
+		}
 
-       js,err := json.Marshal(videos)
-       if err != nil {
-      	  http.Error(rw, err.Error(), http.StatusInternalServerError)
-      	  return
-       }
+		js, err := json.Marshal(videos)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-       rw.WriteHeader(http.StatusTeapot)
-       rw.Header().Set("Content-Type","application/json")
-       rw.Header().Set("Allow-Access-Control-Origin","*")
-       rw.Write(js)
-   }   	
-}  
+		rw.WriteHeader(http.StatusTeapot)
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Allow-Access-Control-Origin", "*")
+		rw.Write(js)
+	}
+}
+
+func getCommentsForVideo(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		catVidId := vars["catVidId"]
+
+		rows, err := db.Query(`SELECT commentID, catVidID, postedBy, commentDesc, parentCommentID
+						FROM Comments
+						WHERE Comments.CatVidID = ?`, catVidId)
+		defer rows.Close()
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var comments []Comment
+
+		for rows.Next() {
+			var c Comment
+			err := rows.Scan(&c.CommentId, &c.CatVidId, &c.Poster, &c.ComentDesc, &c.ParentCommentId)
+
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			/*
+				if c.parentCommentId.Value() {
+					c.parentCommentId = c.parentCommentId.Int64
+				} else {
+					c.parentCommentId = nil
+				}
+			*/
+
+			comments = append(comments, c)
+		}
+
+		js, err := json.Marshal(comments)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		rw.WriteHeader(http.StatusTeapot)
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Allow-Access-Control-Origin", "*")
+		rw.Write(js)
+	}
+
+}
