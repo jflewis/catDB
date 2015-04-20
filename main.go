@@ -1,15 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strings"
-	//"time"
-	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
 )
 
 type Video struct {
@@ -156,11 +155,11 @@ func postComment(db *sql.DB) http.HandlerFunc {
 		catVidId := req.PostFormValue("catVidId")
 		poster := req.PostFormValue("userName")
 		commentBody := req.PostFormValue("commentBody")
-		var parentCommentId sql.NullString
-		parentCommentId.String = req.PostFormValue("parentId")
+		parentCommentId := sql.NullString{req.PostFormValue("parentId"), true}
 		if len(parentCommentId.String) == 0 {
 			parentCommentId.Valid = false
 		}
+
 		_, err := db.Exec("call PostComment(?,?,?,?)", catVidId, parentCommentId, poster, commentBody)
 		if err != nil {
 			log.Fatal(err)
