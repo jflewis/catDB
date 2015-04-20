@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
-	//"github.com/ziutek/mymysql/mysql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
-
+	"strings"
 	//"time"
-	//_ "github.com/ziutek/mymysql/native" // Native engine
-	//_ "github.com/ziutek/mymysql/thrsafe" // Thread safe engine
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -42,14 +39,11 @@ func main() {
 	} else {
 		fmt.Println("database connected to succesfully")
 	}
+
 	r := mux.NewRouter()
-
-	r.HandleFunc("/", getRandVid(db))
-	s := r.Host("www.api.localhost.com").Subrouter()
-	s.HandleFunc("/randomVideo", getRandVid(db))
-
-	//r.HandleFunc("/addVideo/", f)
-	//addVideo(db)
+	//r.Get(name)
+	r.HandleFunc("/randomVideo", getRandVid(db))
+	r.HandleFunc("/addVideo", addVideo(db))
 	http.ListenAndServe(":8080", r)
 
 }
@@ -59,7 +53,7 @@ func getRandVid(db *sql.DB) http.HandlerFunc {
 		var video Video
 		err := db.QueryRow(`SELECT CatVid.title,CatVid.url,CatVid.video_poster, 
 		CatVid.date_posted ,CatVid.catVidID, Vote.upmeows, Vote.downmeows FROM CatVid,
-		 Vote where Vote.catVidID = CatVid.catVidID ORDER BY RAND() LIMIT 1`).Scan(&video.Title, &video.Url, &video.Poster, &video.DatePosted, &video.CatVidId, &video.UpMeows, &video.DownMeows)
+		 Vote where Vote.catVidID = CatVid.catVidID ORDER BY RAND() LIMIT 1;`).Scan(&video.Title, &video.Url, &video.Poster, &video.DatePosted, &video.CatVidId, &video.UpMeows, &video.DownMeows)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -75,14 +69,23 @@ func getRandVid(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-/*
-func addVideo(db *sql.DB) http.Handler {
-	return http.HandleFunc(func(rw http.ResponseWriter, req *http.Request) {
-		//var tag string
-		_, err := db.Exec("call UploadVideo(?,?,?,?)", "a new title", "some fake url", "this,thing,may,work,", "username")
+func addVideo(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		title := req.PostFormValue("title")
+		url := req.PostFormValue("url")
+		tags := req.PostFormValue("tags")
+		userName := req.PostFormValue("userName")
+		endsWithComma := strings.HasSuffix(tags, ",")
+		if !endsWithComma {
+			tags += ","
+		}
+		_, err := db.Exec("call UploadVideo(?,?,?,?)", title, url, tags, userName)
 		if err != nil {
 			log.Fatal(err)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
-	})
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.WriteHeader(http.StatusCreated)
+
+	}
 }
-*/
