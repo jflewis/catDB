@@ -29,6 +29,12 @@ type Comment struct {
 	ParentCommentId *int64 `json:parentCommentId`
 }
 
+type Award struct {
+	AwardId   int64  `json:awardId`
+	AwardName string `json:awardName`
+	AwardDesc string `json:awardName`
+}
+
 func main() {
 	//The db.sql object is meant to be long lived. It does not create a connection to the source
 	//sql.Open create a connection to the db. instead it only prepares database abstraction for later use
@@ -63,6 +69,7 @@ func main() {
 	//calls that need PUT
 	s.HandleFunc("/upMeow/{catVidId}", upMeows(db))
 	s.HandleFunc("/downMeow/{catVidId}", downMeows(db))
+	s.HandleFunc("/addAward/{catVidId}/{awardId}", addAwardToVideo(db))
 	//calls that POST
 	q.HandleFunc("/addVideo", addVideo(db))
 	q.HandleFunc("/postComment", postComment(db))
@@ -90,14 +97,38 @@ func getRandVid(db *sql.DB) http.HandlerFunc {
 		rw.Write(js)
 	}
 }
+func addAwardToVideo(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		catVidId := vars["catVidId"]
+		awardId := vars["awardId"]
+		_, err := db.Exec(`call AddAwardToVideo(?, ?) `, catVidId, awardId)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		rw.WriteHeader(http.StatusNoContent)
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+	}
+}
 
 func getAwards(db *sql.DB) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		var awards []string
+		var awards []Award
 		rows, err := db.Query(`SELECT * FROM Award;`)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var award Award
+			err := rows.Scan(&award.AwardId, &award.AwardName, &award.AwardDesc)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			awards = append(awards, award)
 		}
 		js, err := json.Marshal(awards)
 		if err != nil {
