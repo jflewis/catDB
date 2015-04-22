@@ -57,6 +57,7 @@ func main() {
 	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
 	r.HandleFunc("/getVideoByTag", getVideoByTag(db))
 	r.HandleFunc("/getComments/{catVidId}", getCommentsForVideo(db))
+	r.HandleFunc("/getAwards", getAwards(db))
 	//calls that need PUT
 	s.HandleFunc("/upMeow/{catVidId}", upMeows(db))
 	s.HandleFunc("/downMeow/{catVidId}", downMeows(db))
@@ -78,6 +79,25 @@ func getRandVid(db *sql.DB) http.HandlerFunc {
 			log.Fatal(err)
 		}
 		js, err := json.Marshal(video)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.Write(js)
+	}
+}
+
+func getAwards(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		var awards []string
+		rows, err := db.Query(`SELECT * FROM Award;`)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		js, err := json.Marshal(awards)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
