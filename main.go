@@ -57,19 +57,15 @@ func main() {
 	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
 	r.HandleFunc("/getVideoByTag", getVideoByTag(db))
 	r.HandleFunc("/getComments/{catVidId}", getCommentsForVideo(db))
-<<<<<<< HEAD
 	r.HandleFunc("/getAwards", getAwards(db))
-=======
 	r.HandleFunc("/getTags", getTags(db))
 	r.HandleFunc("/getTags/{catVidId}", getTagsByVidId(db))
->>>>>>> 3e2138b58abad35167a90b31793c4e197ca6f753
 	//calls that need PUT
 	s.HandleFunc("/upMeow/{catVidId}", upMeows(db))
 	s.HandleFunc("/downMeow/{catVidId}", downMeows(db))
 	//calls that POST
 	q.HandleFunc("/addVideo", addVideo(db))
 	q.HandleFunc("/postComment", postComment(db))
-
 
 	http.ListenAndServe(":8080", r)
 
@@ -393,43 +389,43 @@ func getCommentsForVideo(db *sql.DB) http.HandlerFunc {
 }
 
 func getTags(db *sql.DB) http.HandlerFunc {
-     return func(rw http.ResponseWriter, req *http.Request) {
-	  
-		rows, err:= db.Query("SELECT * FROM Tag;")
-	  	defer rows.Close()
-	  	if err !=nil {
-	     	http.Error(rw, err.Error(), http.StatusInternalServerError)
-	     	return
-	 	 }
-	  
-		 var tags[] string
-	  	 //Store tags in a slice and marshal into json object
-	  	 for rows.Next(){
+	return func(rw http.ResponseWriter, req *http.Request) {
 
-	      	 var tagName string
-	      	 err:= rows.Scan(&tagName)
-	      	 if err != nil {
-	      	    http.Error(rw, err.Error(), http.StatusInternalServerError)
-		    return
-	      	    }
+		rows, err := db.Query("SELECT * FROM Tag;")
+		defer rows.Close()
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	      	    tags = append(tags, tagName)
-	  	    }
+		var tags []string
+		//Store tags in a slice and marshal into json object
+		for rows.Next() {
 
-	  	    js,err := json.Marshal(tags) 
-	  	   
+			var tagName string
+			err := rows.Scan(&tagName)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			tags = append(tags, tagName)
+		}
+
+		js, err := json.Marshal(tags)
+
 		rw.WriteHeader(http.StatusOK)
-	  	rw.Header().Set("Content-Type", "application/json")
-	  	rw.Header().Set("Allow-Access-Control-Origin", "*")
-	  	rw.Write(js)
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Allow-Access-Control-Origin", "*")
+		rw.Write(js)
 	}
 }
 
 func getTagsByVidId(db *sql.DB) http.HandlerFunc {
-	return func(rw http.ResponseWriter, req *http.Request){
+	return func(rw http.ResponseWriter, req *http.Request) {
 
 		vars := mux.Vars(req)
-		catVid :=vars["catVidId"]
+		catVid := vars["catVidId"]
 
 		rows, err := db.Query(` SELECT Tag.tagName FROM Tag, VidTag
    where ? = VidTag.catVidID
@@ -441,20 +437,20 @@ func getTagsByVidId(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		var vidTags[] string
+		var vidTags []string
 		for rows.Next() {
 			var tag string
-			err:=rows.Scan(&tag)
+			err := rows.Scan(&tag)
 			if err != nil {
-				http.Error(rw,err.Error(),http.StatusInternalServerError)
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
 			}
 
 			vidTags = append(vidTags, tag)
 		}
 
-		js,err:= json.Marshal(vidTags)
+		js, err := json.Marshal(vidTags)
 		if err != nil {
-			http.Error(rw,err.Error(),http.StatusInternalServerError)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -464,4 +460,3 @@ func getTagsByVidId(db *sql.DB) http.HandlerFunc {
 		rw.Write(js)
 	}
 }
-
