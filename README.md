@@ -8,6 +8,7 @@
   * /getVideoByTag
   * /getComments/{catVidId}
   * /getTags
+  * /getVideoByUser/{user}
   * /getTags/{catVidId}
   * /getAwards
 2. PUT requests
