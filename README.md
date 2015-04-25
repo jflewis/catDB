@@ -9,9 +9,11 @@
   * /getComments/{catVidId}
   * /getTags
   * /getTags/{catVidId}
+  * /getAwards
 2. PUT requests
   * /upMeow/{catVidId}
   * /downMeow/{catVidId}
+  * /addAward/{catVidId}/{awardId}
 3. POST requests
   * /addVideo
   * /postComment
