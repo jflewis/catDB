@@ -3,14 +3,15 @@
 ## the REST API for catDB is as follows
 1. GET requests
   * /randomVideo
-  * /getAllVideos
+  * /getAllVideo
   * /getPopularVideos
+  * /getVideoByUser/{userId}
+  * /getVideoByVidId/{catVidId}
   * /getVideoByTag
-  * /getComments/{catVidId}
-  * /getTags
-  * /getVideoByUser/{user}
+  * /getComments/{catVidId
+  * /getAward
+  * /getTag
   * /getTags/{catVidId}
-  * /getAwards
 2. PUT requests
   * /upMeow/{catVidId}
   * /downMeow/{catVidId}
