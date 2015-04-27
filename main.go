@@ -61,6 +61,7 @@ func main() {
 	r.HandleFunc("/getAllVideos", getAllVideos(db))
 	r.HandleFunc("/getPopularVideos", getPopularVideos(db))
 	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
+	r.HandleFunc("/getVideoByVidId/{catVidId}", getVideoByVidId(db))
 	r.HandleFunc("/getVideoByTag", getVideoByTag(db))
 	r.HandleFunc("/getComments/{catVidId}", getCommentsForVideo(db))
 	r.HandleFunc("/getAwards", getAwards(db))
@@ -252,6 +253,36 @@ func getVideoByUser(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		rw.WriteHeader(http.StatusTeapot)
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.Write(js)
+
+	}
+}
+
+func getVideoByVidId(db *sql.DB) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request){
+		vars:= mux.Vars(req)
+		vidId := vars["catVidId"]
+
+		var video Video
+
+		err := db.QueryRow(`SELECT CatVid.title, CatVid.url, CatVid.video_poster, CatVid.date_posted, CatVid.catVidID, Vote.upmeows, Vote.downmeows FROM CatVid, Vote
+								WHERE CatVid.catvidID = ? AND Vote.catVidId = ?`, vidId, vidId).Scan(&video.Title, &video.Url, &video.Poster, &video.DatePosted, &video.CatVidId, &video.UpMeows, &video.DownMeows)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+
+		
+
+		js, err := json.Marshal(video)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		rw.Header().Set("Content-Type", "application/json")
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
 		rw.Write(js)
