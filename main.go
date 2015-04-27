@@ -53,15 +53,15 @@ func main() {
 	}
 
 	r := mux.NewRouter()
-	s := r.Methods("PUT").Subrouter()
+	s := r.Methods("PUT", "OPTIONS").Subrouter()
 	q := r.Methods("POST").Subrouter()
 
 	//routes
 	r.HandleFunc("/randomVideo", getRandVid(db))
 	r.HandleFunc("/getAllVideos", getAllVideos(db))
 	r.HandleFunc("/getPopularVideos", getPopularVideos(db))
-	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
-	r.HandleFunc("/getVideoByTag", getVideoByTag(db))
+	r.HandleFunc("/getVideosByUser/{userId}", getVideoByUser(db))
+	r.HandleFunc("/getVideosByTags", getVideoByTag(db))
 	r.HandleFunc("/getComments/{catVidId}", getCommentsForVideo(db))
 	r.HandleFunc("/getAwards", getAwards(db))
 	r.HandleFunc("/getTags", getTags(db))
@@ -99,6 +99,11 @@ func getRandVid(db *sql.DB) http.HandlerFunc {
 }
 func addAwardToVideo(db *sql.DB) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method == "OPTIONS" {
+			rw.Header().Set("Access-Control-Allow-Methods", "PUT")
+			rw.Header().Set("Access-Control-Allow-Origin", "*")
+			return
+		}
 		vars := mux.Vars(req)
 		catVidId := vars["catVidId"]
 		awardId := vars["awardId"]
@@ -143,6 +148,11 @@ func getAwards(db *sql.DB) http.HandlerFunc {
 
 func upMeows(db *sql.DB) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method == "OPTIONS" {
+			rw.Header().Set("Access-Control-Allow-Methods", "PUT")
+			rw.Header().Set("Access-Control-Allow-Origin", "*")
+			return
+		}
 		vars := mux.Vars(req)
 		catVidId := vars["catVidId"]
 
@@ -154,14 +164,20 @@ func upMeows(db *sql.DB) http.HandlerFunc {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		rw.WriteHeader(http.StatusNoContent)
+		rw.Header().Set("Access-Control-Allow-Methods", "PUT")
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.WriteHeader(http.StatusNoContent)
 
 	}
 }
 
 func downMeows(db *sql.DB) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method == "OPTIONS" {
+			rw.Header().Set("Access-Control-Allow-Methods", "PUT")
+			rw.Header().Set("Access-Control-Allow-Origin", "*")
+			return
+		}
 		vars := mux.Vars(req)
 		catVidId := vars["catVidId"]
 
@@ -173,8 +189,9 @@ func downMeows(db *sql.DB) http.HandlerFunc {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		rw.WriteHeader(http.StatusNoContent)
+		rw.Header().Set("Access-Control-Allow-Methods", "PUT")
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.WriteHeader(http.StatusNoContent)
 
 	}
 }
@@ -251,9 +268,9 @@ func getVideoByUser(db *sql.DB) http.HandlerFunc {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		rw.WriteHeader(http.StatusTeapot)
-		rw.Header().Set("Content-Type", "application/json")
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.Header().Set("Content-Type", "application/json")
+		rw.WriteHeader(http.StatusAccepted)
 		rw.Write(js)
 
 	}
@@ -369,9 +386,8 @@ func getVideoByTag(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		rw.WriteHeader(http.StatusTeapot)
 		rw.Header().Set("Content-Type", "application/json")
-		rw.Header().Set("Allow-Access-Control-Origin", "*")
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
 		rw.Write(js)
 	}
 }
@@ -410,10 +426,8 @@ func getCommentsForVideo(db *sql.DB) http.HandlerFunc {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		rw.WriteHeader(http.StatusTeapot)
 		rw.Header().Set("Content-Type", "application/json")
-		rw.Header().Set("Allow-Access-Control-Origin", "*")
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
 		rw.Write(js)
 	}
 
