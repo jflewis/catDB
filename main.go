@@ -60,14 +60,9 @@ func main() {
 	r.HandleFunc("/randomVideo", getRandVid(db))
 	r.HandleFunc("/getAllVideos", getAllVideos(db))
 	r.HandleFunc("/getPopularVideos", getPopularVideos(db))
-<<<<<<< HEAD
 	r.HandleFunc("/getVideosByUser/{userId}", getVideoByUser(db))
 	r.HandleFunc("/getVideosByTags", getVideoByTag(db))
-=======
-	r.HandleFunc("/getVideoByUser/{userId}", getVideoByUser(db))
 	r.HandleFunc("/getVideoByVidId/{catVidId}", getVideoByVidId(db))
-	r.HandleFunc("/getVideoByTag", getVideoByTag(db))
->>>>>>> 93095416c27be5ab1c3eb1e7d6b95e2fa1d0042b
 	r.HandleFunc("/getComments/{catVidId}", getCommentsForVideo(db))
 	r.HandleFunc("/getAwards", getAwards(db))
 	r.HandleFunc("/getTags", getTags(db))
