@@ -25,7 +25,7 @@ type Comment struct {
 	CommentId       int64  `json:commentId`
 	CatVidId        int64  `json:catVidId`
 	Poster          string `json:poster`
-	ComentDesc      string `json:comentDesc`
+	CommentDesc      string `json:commentDesc`
 	ParentCommentId *int64 `json:parentCommentId`
 }
 
@@ -57,6 +57,26 @@ func main() {
 	q := r.Methods("POST").Subrouter()
 
 	//routes
+	r.Handle("/browse/", http.StripPrefix("/browse/", http.FileServer(http.Dir("catvids/browse"))))
+	r.Handle("/browse/{key}", http.StripPrefix("/browse/", http.FileServer(http.Dir("catvids/browse"))))
+
+	r.Handle("/comment/", http.StripPrefix("/comment/", http.FileServer(http.Dir("comment"))))
+	r.Handle("/comment/{key}", http.StripPrefix("/comment/", http.FileServer(http.Dir("comment"))))
+
+	r.Handle("/post/", http.StripPrefix("/post/", http.FileServer(http.Dir("catvids/post"))))
+	r.Handle("/post/{key}", http.StripPrefix("/post/", http.FileServer(http.Dir("catvids/post"))))
+
+	r.Handle("/css/{key}", http.StripPrefix("/css/", http.FileServer(http.Dir("catvids/css/"))))
+	r.Handle("/fonts/{key}", http.StripPrefix("/fonts/", http.FileServer(http.Dir("catvids/fonts"))))
+	r.Handle("/img/{key}", http.StripPrefix("/img/", http.FileServer(http.Dir("catvids/img"))))
+
+	r.Handle("/scripts/jquery-ui-1.11.4/{key}", http.StripPrefix("/scripts/jquery-ui-1.11.4/", http.FileServer(http.Dir("catvids/scripts/jquery-ui-1.11.4"))))
+	r.Handle("/scripts/elevator.js/{key}", http.StripPrefix("/scripts/elevator.js/", http.FileServer(http.Dir("catvids/scripts/elevator.js"))))
+	r.Handle("/scripts/{key}", http.StripPrefix("/scripts/", http.FileServer(http.Dir("catvids/scripts"))))
+
+	r.Handle("/", http.FileServer(http.Dir("catvids")))
+	r.Handle("/index.html", http.FileServer(http.Dir("catvids")))
+
 	r.HandleFunc("/randomVideo", getRandVid(db))
 	r.HandleFunc("/getAllVideos", getAllVideos(db))
 	r.HandleFunc("/getPopularVideos", getPopularVideos(db))
@@ -278,8 +298,8 @@ func getVideoByUser(db *sql.DB) http.HandlerFunc {
 }
 
 func getVideoByVidId(db *sql.DB) http.HandlerFunc {
-	return func(rw http.ResponseWriter, req *http.Request){
-		vars:= mux.Vars(req)
+	return func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
 		vidId := vars["catVidId"]
 
 		var video Video
@@ -290,9 +310,6 @@ func getVideoByVidId(db *sql.DB) http.HandlerFunc {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-
-		
 
 		js, err := json.Marshal(video)
 		if err != nil {
@@ -442,7 +459,7 @@ func getCommentsForVideo(db *sql.DB) http.HandlerFunc {
 
 		for rows.Next() {
 			var c Comment
-			err := rows.Scan(&c.CommentId, &c.CatVidId, &c.Poster, &c.ComentDesc, &c.ParentCommentId)
+			err := rows.Scan(&c.CommentId, &c.CatVidId, &c.Poster, &c.CommentDesc, &c.ParentCommentId)
 
 			if err != nil {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
