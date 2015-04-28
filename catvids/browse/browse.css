@@ -1,0 +1,50 @@
+* {
+	font-family: 'Lobster', cursive;
+}
+
+#video-list {
+	list-style-type: none;
+}
+
+.expand-video {
+	display: none;
+}
+
+.posted-by {
+	font-size: 14px;
+	color: #696969;
+}
+
+.video-link {
+	font-weight: bold;
+	font-size: 18px;
+	display: list-item;
+	height: 110px;
+	vertical-align: middle;
+}
+
+.post-hover:hover {
+	  transition: all 0.3s ease 0s;
+	  -webkit-transition: all 0.5s ease 0s;
+	   color: #95a5a6;
+	   cursor: default;
+}
+
+.vote-container {
+	display: inline-block;
+	width: 30px;
+	vertical-align: middle;
+}
+
+.upmeow {
+	display: relative;
+	margin: 0;
+}
+
+.downmeow {
+	display: relative;
+	margin: 0;
+	-ms-transform: rotate(180deg); /* IE 9 */
+    -webkit-transform: rotate(180deg); /* Chrome, Safari, Opera */
+    transform: rotate(180deg);
+}
