@@ -1,0 +1,32 @@
+* {
+	font-family: 'Lobster', cursive;
+}
+
+#video-list {
+	list-style-type: none;
+}
+
+.comment-ul {
+	list-style-type: none;
+}
+
+#form-center-thing {
+	text-align: center;
+}
+
+#comment-form {
+	padding-left: 15px;
+}
+
+#comment-wrapper {
+	text-align: left;
+}
+
+.single-comment-wrapper {
+	display: list-item;
+	list-style-type: none;
+}
+
+#comment-chain>.meme:nth-child(odd) {
+	background-color: #DADADA;
+}

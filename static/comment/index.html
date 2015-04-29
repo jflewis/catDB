@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title> - Comments</title>
+
+		<!--Lobster font-->
+		<link href="http://fonts.googleapis.com/css?family=Lobster" rel="stylesheet">
+
+		<!--Stylesheet-->	
+		<link rel="stylesheet" href="/static/css/comment.css">
+
+		<!--jQuery, Bootstrap, etc-->
+		<script src="/static/scripts/jquery-1.11.2.min.js"></script>
+		<link rel="stylesheet" href="/static/css/bootstrap.min.css">
+		<script src="/static/scripts/bootstrap.min.js"></script>
+		<link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+
+		<!--Jquery Rotate-->
+		<script src="/static/scripts/jQueryRotateCompressed.js"></script>
+
+		<!--Local JS-->
+		<script src="/static/scripts/comment.js"></script>
+
+		<!--Icon on tabs (Chrome/FF)-->
+		<link rel="shortcut icon" href="/static/img/shortcut.ico">
+
+		<!--Konami-->
+		<script src="/static/scripts/snaptortoise-konami-js-6a47176/konami.js"></script>
+		<script src="/static/scripts/shrok.js"></script>
+
+		<!--Global function-->
+		<script src="/static/scripts/globalFunctions.js"></script>
+
+</head>	
+
+<body>
+
+<audio class="shrok" loop>
+  <source src="/static/scripts/shrok.wmv.mp3.mp3" type="audio/mpeg">
+  Your browser does not support the audio ilk.
+</audio>
+
+	<div class="jumbotron">
+		<div class="container">
+			<h1>Comments for <span id="video-title"></span></h1>
+			<h3><a href="/">catabase.com</a></h3>
+		</div>
+	</div>
+
+<div class="container" id="video-wrapper"> </div>	
+	
+<div class="container">
+<div id="form-center-thing">
+	
+	<form id="comment-form">
+	<fieldset>
+	<!-- Form Name -->
+	<legend>Let's Talk About Cats</legend>
+
+	<!-- Text input-->
+	<div class="control-group">
+	  	<label class="control-label" for="userName">User Name</label>
+	  </div>
+  	<div class="controls">
+    	<input id="userName" name="userName" type="text" placeholder="user name">
+    
+  	</div>
+</div>
+
+<input class="form-control" id = "catvidID" type="hidden" name="catVidId" value="">
+<input class="form-control" id = "parentId" type="hidden" name="parentId" value="">
+<!-- Textarea -->
+<div class="control-group">
+  <label class="control-label" for="comment">Comment</label>
+  <div class="controls">                     
+    <textarea class="form-control" id="comment" name="commentBody">Cats, am I right guys?</textarea>
+  </div>
+</div>
+
+<input type="submit" value="Comment"> 
+
+
+</fieldset>
+</form>
+</div>
+</div>
+	
+<div class="container">
+	Here's the comments
+
+	<div id="comment-wrapper">
+		
+	<ul id="comment-chain">
+	</ul>
+
+	</div>
+
+</div>
+
+</div>
+
+</body>
+</html>
